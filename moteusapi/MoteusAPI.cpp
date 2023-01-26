@@ -69,6 +69,46 @@ bool MoteusAPI::SendPositionCommand(double stop_position, double velocity,
   return true;
 }
 
+bool MoteusAPI::SendSinusoidalPositionCommand(double stop_position, double velocity,
+                                    double max_torque,
+                                    double feedforward_torque, double kp_scale,
+                                    double kd_scale, double position,
+                                    double watchdog_timer) const {
+  mjbots::moteus::PositionCommand p_com;
+  p_com.position = position;
+  p_com.velocity = velocity;
+  p_com.maximum_torque = max_torque;
+  p_com.stop_position = stop_position;
+  p_com.kp_scale = kp_scale;
+  p_com.kd_scale = kd_scale;
+  p_com.feedforward_torque = feedforward_torque;
+  p_com.watchdog_timeout = watchdog_timer;
+  mjbots::moteus::CanFrame frame;
+  mjbots::moteus::WriteCanFrame write_frame(&frame);
+  mjbots::moteus::PositionResolution pres;
+  mjbots::moteus::EmitSinusoidalPositionCommand(&write_frame, p_com, pres);
+
+  // Encode message to hex
+  stringstream ss;
+  ss << "can send 80" << std::setfill('0') << std::setw(2) << std::hex
+     << moteus_id_ << " ";
+  for (uint ii = 0; ii < (uint)frame.size; ii++) {
+    ss << std::setfill('0') << std::setw(2) << std::hex << (int)frame.data[ii];
+  }
+  ss << '\n';
+
+  if (!WriteDev(ss.str()))
+    throw std::runtime_error("Failiur: could not WriteDev.");
+
+  // process response
+  string resp;
+  if (!((ExpectResponse("OK", resp) && ExpectResponse("rcv", resp)))) {
+    return false;
+  }
+
+  return true;
+}
+
 bool MoteusAPI::SendStopCommand() {
   mjbots::moteus::CanFrame frame;
   mjbots::moteus::WriteCanFrame write_frame(&frame);

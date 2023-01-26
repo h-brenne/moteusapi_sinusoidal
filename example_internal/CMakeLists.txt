@@ -4,6 +4,9 @@ target_link_libraries(torquecmd ${LIBRARY_NAME})
 add_executable(positioncmd main_positioncmd.cpp)
 target_link_libraries(positioncmd ${LIBRARY_NAME})
 
+add_executable(sinusoidalcmd main_sinusoidalcmd.cpp)
+target_link_libraries(sinusoidalcmd ${LIBRARY_NAME})
+
 add_executable(velocitycmd main_velocitycmd.cpp)
 target_link_libraries(velocitycmd ${LIBRARY_NAME})
 

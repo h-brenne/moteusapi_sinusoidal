@@ -144,6 +144,8 @@ enum class Mode {
   kZeroVelocity = 12,
   kStayWithinBounds = 13,
   kMeasureInductance = 14,
+  kBrake = 15,
+  kSinusoidal = 16,
   kNumModes,
 };
 
@@ -570,6 +572,55 @@ inline void EmitPositionCommand(WriteCanFrame *frame,
   frame->Write<int8_t>(Multiplex::kWriteInt8 | 0x01);
   frame->Write<int8_t>(Register::kMode);
   frame->Write<int8_t>(Mode::kPosition);
+
+  // Now we use some heuristics to try and group consecutive registers
+  // of the same resolution together into larger writes.
+  WriteCombiner<8> combiner(frame, 0x00, Register::kCommandPosition,
+                            {
+                                resolution.position,
+                                resolution.velocity,
+                                resolution.feedforward_torque,
+                                resolution.kp_scale,
+                                resolution.kd_scale,
+                                resolution.maximum_torque,
+                                resolution.stop_position,
+                                resolution.watchdog_timeout,
+                            });
+
+  if (combiner.MaybeWrite()) {
+    frame->WritePosition(command.position, resolution.position);
+  }
+  if (combiner.MaybeWrite()) {
+    frame->WriteVelocity(command.velocity, resolution.velocity);
+  }
+  if (combiner.MaybeWrite()) {
+    frame->WriteTorque(command.feedforward_torque,
+                       resolution.feedforward_torque);
+  }
+  if (combiner.MaybeWrite()) {
+    frame->WritePwm(command.kp_scale, resolution.kp_scale);
+  }
+  if (combiner.MaybeWrite()) {
+    frame->WritePwm(command.kd_scale, resolution.kd_scale);
+  }
+  if (combiner.MaybeWrite()) {
+    frame->WriteTorque(command.maximum_torque, resolution.maximum_torque);
+  }
+  if (combiner.MaybeWrite()) {
+    frame->WritePosition(command.stop_position, resolution.stop_position);
+  }
+  if (combiner.MaybeWrite()) {
+    frame->WriteTime(command.watchdog_timeout, resolution.watchdog_timeout);
+  }
+}
+
+inline void EmitSinusoidalPositionCommand(WriteCanFrame *frame,
+                                const PositionCommand &command,
+                                const PositionResolution &resolution) {
+  // First, set the position mode.
+  frame->Write<int8_t>(Multiplex::kWriteInt8 | 0x01);
+  frame->Write<int8_t>(Register::kMode);
+  frame->Write<int8_t>(Mode::kSinusoidal);
 
   // Now we use some heuristics to try and group consecutive registers
   // of the same resolution together into larger writes.
