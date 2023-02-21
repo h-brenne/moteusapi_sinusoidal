@@ -70,7 +70,7 @@ bool MoteusAPI::SendPositionCommand(double stop_position, double velocity,
 }
 
 bool MoteusAPI::SendSinusoidalPositionCommand(double stop_position, double velocity,
-                                    double max_torque,
+                                    double max_torque, double sinusoidal_amplitude, double sinusoidal_phase,
                                     double feedforward_torque, double kp_scale,
                                     double kd_scale, double position,
                                     double watchdog_timer) const {
@@ -78,6 +78,10 @@ bool MoteusAPI::SendSinusoidalPositionCommand(double stop_position, double veloc
   p_com.position = position;
   p_com.velocity = velocity;
   p_com.maximum_torque = max_torque;
+
+  p_com.sinusoidal_amplitude = sinusoidal_amplitude;
+  p_com.sinusoidal_phase = sinusoidal_phase;
+
   p_com.stop_position = stop_position;
   p_com.kp_scale = kp_scale;
   p_com.kd_scale = kd_scale;

@@ -9,9 +9,12 @@ int main() {
   // send one position with speed and torque limits
   double stop_position = NAN;
   double velocity = 2;
+  double sinusoidal_amplitude = 0.3;
+  double sinusoidal_phase = 0.0;
   double max_torque = 0.1;
   double feedforward_torque = 0;
-  api.SendSinusoidalPositionCommand(stop_position, velocity, max_torque,
+  
+  api.SendSinusoidalPositionCommand(stop_position, velocity, max_torque, sinusoidal_amplitude, sinusoidal_phase,
                           feedforward_torque);
 
   return 0;

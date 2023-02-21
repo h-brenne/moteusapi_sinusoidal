@@ -120,8 +120,8 @@ class MoteusAPI {
                            double position = NAN,
                            double watchdog_timer = NAN) const;
   bool SendSinusoidalPositionCommand(double stop_position, double velocity,
-                           double max_torque, double feedforward_torque = 0,
-                           double kp_scale = 1.0, double kd_scale = 1.0,
+                           double max_torque, double sinusoidal_amplitude, double sinusoidal_phase,
+                           double feedforward_torque = 0, double kp_scale = 1.0, double kd_scale = 1.0,
                            double position = NAN,
                            double watchdog_timer = NAN) const;
   bool SendWithinCommand(double bounds_min, double bounds_max,

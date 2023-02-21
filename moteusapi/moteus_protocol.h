@@ -21,6 +21,8 @@
 #include <cstring>
 #include <limits>
 
+constexpr float k2Pi = 6.28318530718;
+
 /// @file
 ///
 /// This describes helper classes useful for constructing and parsing
@@ -101,6 +103,9 @@ enum Register : uint32_t {
   kCommandPositionMaxTorque = 0x025,
   kCommandStopPosition = 0x026,
   kCommandTimeout = 0x027,
+
+  kCommandSinusoidalAmplitude = 0x2b,
+  kCommandSinusoidalPhase = 0x2c,
 
   kPositionKp = 0x030,
   kPositionKi = 0x031,
@@ -235,6 +240,14 @@ class WriteCanFrame {
 
   void WriteVelocity(double value, Resolution res) {
     WriteMapped(value, 0.1, 0.00025, 0.00001, res);
+  }
+
+  void WriteSinusoidalAmplitude(double value, Resolution res){
+    WriteMapped(value, 1.0 / 127.0, 1.0 / 32767.0, 1.0 / 2147483647.0, res);
+  }
+
+  void WriteSinusoidalPhase(double value, Resolution res){
+    WriteMapped(value, k2Pi / 127.0, k2Pi / 32767.0, k2Pi/ 2147483647.0, res);
   }
 
   void WriteTorque(double value, Resolution res) {
@@ -490,6 +503,14 @@ class MultiplexParser {
     return ReadMapped(res, 0.1, 0.00025, 0.00001);
   }
 
+  double REadSinusoidalAmplitude(Resolution res){
+    return ReadMapped(res, 1.0 / 127.0, 1.0 / 32767.0, 1.0 / 2147483647.0);
+  }
+
+  double ReadSinusoidalPhase(Resolution res){
+    return ReadMapped(res, k2Pi / 127.0, k2Pi / 32767.0, k2Pi/ 2147483647.0);
+  }
+
   double ReadTorque(Resolution res) {
     return ReadMapped(res, 0.5, 0.01, 0.001);
   }
@@ -547,6 +568,10 @@ struct PositionCommand {
   double position = 0.0;
   double velocity = 0.0;
   double feedforward_torque = 0.0;
+
+  double sinusoidal_amplitude = 0.0;
+  double sinusoidal_phase = 0.0;
+
   double kp_scale = 1.0;
   double kd_scale = 1.0;
   double maximum_torque = 0.0;
@@ -558,6 +583,8 @@ struct PositionResolution {
   Resolution position = Resolution::kFloat;
   Resolution velocity = Resolution::kFloat;
   Resolution feedforward_torque = Resolution::kFloat;
+  Resolution sinusoidal_amplitude = Resolution::kFloat;
+  Resolution sinusoidal_phase = Resolution::kFloat;
   Resolution kp_scale = Resolution::kFloat;
   Resolution kd_scale = Resolution::kFloat;
   Resolution maximum_torque = Resolution::kIgnore;
@@ -660,6 +687,19 @@ inline void EmitSinusoidalPositionCommand(WriteCanFrame *frame,
   }
   if (combiner.MaybeWrite()) {
     frame->WriteTime(command.watchdog_timeout, resolution.watchdog_timeout);
+  }
+
+  WriteCombiner<2> combiner2(frame, 0x00, Register::kCommandSinusoidalAmplitude,
+                            {
+                                resolution.sinusoidal_amplitude,
+                                resolution.sinusoidal_phase,
+                            });
+
+  if (combiner2.MaybeWrite()) {
+    frame->WriteSinusoidalAmplitude(command.sinusoidal_amplitude, resolution.sinusoidal_amplitude);
+  }
+  if (combiner2.MaybeWrite()) {
+    frame->WriteSinusoidalPhase(command.sinusoidal_phase, resolution.sinusoidal_phase);
   }
 }
 
