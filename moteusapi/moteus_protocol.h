@@ -503,7 +503,7 @@ class MultiplexParser {
     return ReadMapped(res, 0.1, 0.00025, 0.00001);
   }
 
-  double REadSinusoidalAmplitude(Resolution res){
+  double ReadSinusoidalAmplitude(Resolution res){
     return ReadMapped(res, 1.0 / 127.0, 1.0 / 32767.0, 1.0 / 2147483647.0);
   }
 
